@@ -3,8 +3,145 @@
 <head>
   <meta charset="UTF-8">
   <title>Adang's</title>
+  <style>
+    *{ margin: 0; padding: 0;}
+    body{ font-family: "Helvetica Neue",Helvetica,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","微软雅黑",Arial,sans-serif;}
+    ul,li{ list-style: none;}
+    .app{ width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
+    .header{ height: 70px; background: #222; display: flex; align-items: center; padding: 0 10px;}
+    .header img{ width: 100%; height: 100%;}
+    .header .logo{ width: 50px; height: 50px; margin-right: 20px;}
+    .header .tools{ display: flex; align-items: center;}
+    .header .tools li{ width: 30px; height: 30px; padding: 5px; cursor: pointer;}
+    .header .tools li:hover{ border-radius: 50%; background-color: #000;}
+    .header .tools li.is-disabled{ opacity: .4; cursor: default;}
+
+    .header .nav{ flex: 1; text-align: center; color: #fff; font-size: 20px; padding-right: 70px;}
+    .content{ flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;}
+    .content h1{ animation: breathe 3s infinite; font-size: 50px;}
+
+    @keyframes breathe {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
 </head>
 <body>
-  <div style="position: absolute; left: 50%; top: 50%; transform: translate3d(-50%, -50%, 0); font-size: 50px;">For Fun, For Gamer...</div>
+<view class="app">
+  <div class="header" data-tauri-drag-region>
+    <div class="logo">
+      <img src="./assets/javascript.svg">
+    </div>
+    <ul class="tools">
+      <li class="ref-back" onclick="handleBack()">
+        <img src="./assets/svg-007.svg">
+      </li>
+      <li class="ref-forward is-disabled" onclick="handleForward()">
+        <img src="./assets/svg-006.svg">
+      </li>
+      <li onclick="handleReload()">
+        <img src="./assets/svg-005.svg">
+      </li>
+    </ul>
+    <view class="nav"> Tauri Adang </view>
+    <ul class="tools menu">
+      <li onclick="handleWindowMinimize()">
+        <img src="./assets/svg-004.svg">
+      </li>
+      <li class="ref-maximized" onclick="handleWindowMaximize()">
+        <img src="./assets/svg-002.svg">
+      </li>
+      <li onclick="handleWindowHide()">
+        <img src="./assets/svg-001.svg">
+      </li>
+    </ul>
+  </div>
+  <div class="content" style="">
+    <h1>For HTML, For CSS, For JS...</h1>
+  </div>
+</view>
+<script>
+  const { appWindow } = window.__TAURI__?.window || {}
+  const { invoke } = window.__TAURI__?.tauri || {}
+
+  const isBack = window.history.state && !!window.history.state?.back
+  const isForward = !!window.history.state?.forward
+
+  const handleBack = () => {
+    if (isBack.value) {
+      window.history.back();
+    }
+  }
+
+  const handleForward = () => {
+    if (isForward.value) {
+      window.history.forward();
+    }
+  }
+
+  const handleReload = () => {
+    window.location.reload();
+  }
+
+  const handleWindowHide = async () => {
+    if (appWindow) {
+      await appWindow.hide();
+    } else {
+      console.log('window.__TAURI__', 'handleWindowHide', window.__TAURI__)
+    }
+  }
+
+  const handleWindowMaximize = async () => {
+    if (appWindow) {
+      if (/mac/gi.test(navigator.userAgent)) {
+        await appWindow.setFullscreen(!isWindowState);
+      } else {
+        await appWindow.toggleMaximize();
+      }
+      getIsWindowState()
+    } else {
+      console.log('window.__TAURI__', 'handleWindowMaximize', window.__TAURI__)
+    }
+  }
+
+  const handleWindowMinimize = async () => {
+    if (appWindow) {
+      await appWindow.minimize();
+    } else {
+      console.log('window.__TAURI__', 'handleWindowMinimize', window.__TAURI__)
+    }
+  }
+
+  let isWindowState = false
+  const getIsWindowState = async () => {
+    if (appWindow) {
+      isWindowState = /mac/gi.test(navigator.userAgent) ? await appWindow.isFullscreen() : await appWindow.isMaximized();
+      const refMaximized = document.querySelector('.ref-maximized img')
+      if (isWindowState) {
+        refMaximized.src = './assets/svg-003.svg'
+      } else {
+        refMaximized.src = './assets/svg-002.svg'
+      }
+    } else {
+      console.log('window.__TAURI_IPC__', 'getIsMaximized', window.__TAURI__)
+    }
+  }
+
+  const loadingEnd = async () => {
+    if (invoke) {
+      await invoke('close_splashscreen')
+    } else {
+      console.log('window.__TAURI_IPC__', 'loadingEnd', window.__TAURI__)
+    }
+  }
+
+  getIsWindowState()
+
+  // 模拟这个页面需要的加载时间
+  setTimeout(() => {
+    loadingEnd()
+  }, 1500)
+</script>
 </body>
 </html>
